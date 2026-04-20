@@ -1,6 +1,6 @@
 {
   "name": "file-transfer",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": true,
   "description": "LAN file-sharing app (exported bundle)",
   "main": "main.js",
