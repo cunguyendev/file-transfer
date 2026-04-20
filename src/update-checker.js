@@ -29,12 +29,14 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var update_checker_exports = {};
 __export(update_checker_exports, {
   getUpdateInfo: () => getUpdateInfo,
+  refreshIfStale: () => refreshIfStale,
   startUpdateChecker: () => startUpdateChecker
 });
 module.exports = __toCommonJS(update_checker_exports);
 var import_node_fs = __toESM(require("node:fs"));
 var import_node_path = __toESM(require("node:path"));
 const CHECK_INTERVAL_MS = 60 * 60 * 1e3;
+const STALE_MS = 5 * 60 * 1e3;
 function readPackageJson() {
   try {
     const p = import_node_path.default.join(__dirname, "..", "package.json");
@@ -71,7 +73,21 @@ let state = {
   repo: repoSlug,
   checkedAt: (/* @__PURE__ */ new Date(0)).toISOString()
 };
+let ioRef = null;
+let inFlight = null;
 function getUpdateInfo() {
+  return state;
+}
+async function refreshIfStale() {
+  if (!repoSlug) return state;
+  const age = Date.now() - new Date(state.checkedAt).getTime();
+  if (age <= STALE_MS) return state;
+  if (!inFlight) {
+    inFlight = checkForUpdates(ioRef ?? void 0).finally(() => {
+      inFlight = null;
+    });
+  }
+  await inFlight;
   return state;
 }
 async function checkForUpdates(io) {
@@ -101,6 +117,7 @@ async function checkForUpdates(io) {
   }
 }
 function startUpdateChecker(io) {
+  ioRef = io;
   if (!repoSlug) return;
   void checkForUpdates(io);
   setInterval(() => void checkForUpdates(io), CHECK_INTERVAL_MS).unref();
@@ -108,5 +125,6 @@ function startUpdateChecker(io) {
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   getUpdateInfo,
+  refreshIfStale,
   startUpdateChecker
 });

@@ -41,9 +41,10 @@ function registerRoutes(app, controller, upload, publicDir) {
   app.get("/download/:filename", controller.download);
   app.get("/preview/:filename", controller.preview);
   app.delete("/files/:filename", controller.remove);
-  app.get("/version", (_req, res) => {
+  app.get("/version", async (_req, res) => {
+    const info = await (0, import_update_checker.refreshIfStale)();
     res.set("Cache-Control", "no-store");
-    res.json((0, import_update_checker.getUpdateInfo)());
+    res.json(info);
   });
 }
 // Annotate the CommonJS export names for ESM import in node:
