@@ -31,8 +31,11 @@ __export(file_store_exports, {
   FileStore: () => FileStore
 });
 module.exports = __toCommonJS(file_store_exports);
+var import_node_crypto = __toESM(require("node:crypto"));
 var import_node_fs = __toESM(require("node:fs"));
 var import_node_path = __toESM(require("node:path"));
+const META_SUFFIX = ".meta.json";
+const SCRYPT_KEYLEN = 64;
 class FileStore {
   constructor(dir) {
     this.dir = dir;
@@ -45,18 +48,20 @@ class FileStore {
     return this.dir;
   }
   list() {
-    return import_node_fs.default.readdirSync(this.dir, { withFileTypes: true }).filter((entry) => entry.isFile()).map((entry) => {
+    return import_node_fs.default.readdirSync(this.dir, { withFileTypes: true }).filter((entry) => entry.isFile() && !entry.name.endsWith(META_SUFFIX)).map((entry) => {
       const stat = import_node_fs.default.statSync(import_node_path.default.join(this.dir, entry.name));
       return {
         storedName: entry.name,
         size: stat.size,
-        uploadedAt: stat.mtime.toISOString()
+        uploadedAt: stat.mtime.toISOString(),
+        hasPassword: this.hasPassword(entry.name)
       };
     }).sort(
       (a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
     );
   }
   resolve(name) {
+    if (name.endsWith(META_SUFFIX)) return null;
     const resolved = import_node_path.default.resolve(this.dir, name);
     const relative = import_node_path.default.relative(this.dir, resolved);
     if (relative.startsWith("..") || import_node_path.default.isAbsolute(relative)) return null;
@@ -70,7 +75,47 @@ class FileStore {
     const p = this.resolve(name);
     if (!p || !import_node_fs.default.existsSync(p)) return false;
     import_node_fs.default.unlinkSync(p);
+    const metaPath = this.metaPath(name);
+    if (metaPath && import_node_fs.default.existsSync(metaPath)) import_node_fs.default.unlinkSync(metaPath);
     return true;
+  }
+  setPassword(name, password) {
+    const metaPath = this.metaPath(name);
+    if (!metaPath || !this.exists(name)) return false;
+    const salt = import_node_crypto.default.randomBytes(16);
+    const hash = import_node_crypto.default.scryptSync(password, salt, SCRYPT_KEYLEN);
+    const meta = {
+      passwordHash: `${salt.toString("hex")}:${hash.toString("hex")}`
+    };
+    import_node_fs.default.writeFileSync(metaPath, JSON.stringify(meta), "utf8");
+    return true;
+  }
+  hasPassword(name) {
+    const metaPath = this.metaPath(name);
+    return metaPath !== null && import_node_fs.default.existsSync(metaPath);
+  }
+  verifyPassword(name, password) {
+    const meta = this.readMeta(name);
+    if (!meta) return false;
+    const [saltHex, hashHex] = meta.passwordHash.split(":");
+    if (!saltHex || !hashHex) return false;
+    const salt = Buffer.from(saltHex, "hex");
+    const expected = Buffer.from(hashHex, "hex");
+    const actual = import_node_crypto.default.scryptSync(password, salt, expected.length);
+    return actual.length === expected.length && import_node_crypto.default.timingSafeEqual(actual, expected);
+  }
+  metaPath(name) {
+    const p = this.resolve(name);
+    return p ? `${p}${META_SUFFIX}` : null;
+  }
+  readMeta(name) {
+    const metaPath = this.metaPath(name);
+    if (!metaPath || !import_node_fs.default.existsSync(metaPath)) return null;
+    try {
+      return JSON.parse(import_node_fs.default.readFileSync(metaPath, "utf8"));
+    } catch {
+      return null;
+    }
   }
 }
 // Annotate the CommonJS export names for ESM import in node:

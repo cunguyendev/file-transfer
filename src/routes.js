@@ -40,6 +40,7 @@ function registerRoutes(app, controller, upload, publicDir) {
   app.post("/upload", upload.array("files"), controller.upload);
   app.get("/download/:filename", controller.download);
   app.get("/preview/:filename", controller.preview);
+  app.post("/verify-password/:filename", controller.verifyPassword);
   app.delete("/files/:filename", controller.remove);
   app.get("/version", async (_req, res) => {
     const info = await (0, import_update_checker.refreshIfStale)();
