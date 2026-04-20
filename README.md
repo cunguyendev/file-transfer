@@ -31,4 +31,10 @@ printed on startup with other devices on the same LAN.
 - `GET  /preview/:filename`    — inline view (used by UI thumbs & modal)
 - `GET  /download/:filename`   — download (attachment)
 - `DELETE /files/:filename`    — delete
-- Socket.IO at `/socket.io/`   — emits `files:new`, `files:deleted`, `devices:update`
+- `GET  /version`              — current version + latest GitHub tag (used by the in-app update banner)
+- Socket.IO at `/socket.io/`   — emits `files:new`, `files:deleted`, `devices:update`, `update:available`
+
+## Report a bug or request a feature
+
+Found something broken or have an idea to make this better?
+[Open an issue on GitHub](https://github.com/cunguyendev/file-transfer/issues) — bug reports, feature requests, and feedback are all welcome.
