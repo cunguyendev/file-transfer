@@ -2,7 +2,7 @@
   "name": "file-transfer",
   "version": "0.0.4",
   "private": true,
-  "description": "LAN file-sharing app (exported bundle)",
+  "description": "A private, self-hosted file transfer app for your local network. Built with Express, React, and Socket.IO. No cloud, no account, no tracking.",
   "main": "main.js",
   "scripts": {
     "start": "node main.js"
