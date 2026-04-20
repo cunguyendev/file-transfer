@@ -32,6 +32,7 @@ var import_upload = require("./middleware/upload");
 var import_files_controller = require("./controllers/files-controller");
 var import_routes = require("./routes");
 var import_sockets = require("./sockets");
+var import_update_checker = require("./update-checker");
 function getLocalIPs() {
   const interfaces = import_node_os.default.networkInterfaces();
   const ips = [];
@@ -53,6 +54,7 @@ const upload = (0, import_upload.createUploadMiddleware)(import_config.config.up
 const controller = new import_files_controller.FilesController(store, io);
 (0, import_routes.registerRoutes)(app, controller, upload, import_config.config.publicDir);
 (0, import_sockets.setupSockets)(io, devices);
+(0, import_update_checker.startUpdateChecker)(io);
 server.listen(import_config.config.port, import_config.config.host, () => {
   console.log(`
   file-transfer is running!

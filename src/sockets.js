@@ -21,6 +21,7 @@ __export(sockets_exports, {
   setupSockets: () => setupSockets
 });
 module.exports = __toCommonJS(sockets_exports);
+var import_update_checker = require("./update-checker");
 function setupSockets(io, registry) {
   io.on("connection", (socket) => {
     const info = {
@@ -31,6 +32,8 @@ function setupSockets(io, registry) {
     };
     registry.add(info);
     io.emit("devices:update", registry.list());
+    const update = (0, import_update_checker.getUpdateInfo)();
+    if (update.updateAvailable) socket.emit("update:available", update);
     socket.on("disconnect", () => {
       registry.remove(socket.id);
       io.emit("devices:update", registry.list());

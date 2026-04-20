@@ -32,6 +32,7 @@ __export(routes_exports, {
 });
 module.exports = __toCommonJS(routes_exports);
 var import_express = __toESM(require("express"));
+var import_update_checker = require("./update-checker");
 function registerRoutes(app, controller, upload, publicDir) {
   app.use(import_express.default.json());
   app.use(import_express.default.static(publicDir));
@@ -40,6 +41,10 @@ function registerRoutes(app, controller, upload, publicDir) {
   app.get("/download/:filename", controller.download);
   app.get("/preview/:filename", controller.preview);
   app.delete("/files/:filename", controller.remove);
+  app.get("/version", (_req, res) => {
+    res.set("Cache-Control", "no-store");
+    res.json((0, import_update_checker.getUpdateInfo)());
+  });
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

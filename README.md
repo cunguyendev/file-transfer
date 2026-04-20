@@ -1,8 +1,9 @@
 # file-transfer
 
 Self-contained production bundle of the LAN file-sharing app.
-UI (React) is pre-built into `apps/file-transfer/src/assets/public/` and served
-by the Express API at `/`.
+UI (React) is pre-built into `src/assets/public/` and served by the Express API at `/`.
+
+![file-transfer preview](./file-transfer-preview.png)
 
 ## Install & run
 
