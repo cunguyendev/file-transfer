@@ -5,6 +5,16 @@ UI (React) is pre-built into `src/assets/public/` and served by the Express API 
 
 ![file-transfer preview](./file-transfer-preview.png)
 
+## Features
+
+- Drag-and-drop multi-file uploads with progress
+- Inline preview modal (images + videos) + one-click download
+- **Optional password protection** — set a password at upload time; viewing or downloading the file afterwards requires it
+- **Share links** — each file has a Share button that copies a `?share=<name>` URL; opening that URL pins the file to the top of the list with a banner + badge so recipients can spot it immediately
+- Real-time device presence + file list sync across all connected devices via Socket.IO
+- In-app update banner when a newer release is tagged on GitHub
+- Floating "Report bug" button that opens GitHub issues in a new tab
+
 ## Install & run
 
 ```bash
@@ -25,14 +35,31 @@ printed on startup with other devices on the same LAN.
 
 ## Endpoints
 
-- `GET  /`                     — React UI
-- `GET  /files`                — list uploaded files
-- `POST /upload`               — multipart upload (field: `files`, supports multiple)
-- `GET  /preview/:filename`    — inline view (used by UI thumbs & modal)
-- `GET  /download/:filename`   — download (attachment)
-- `DELETE /files/:filename`    — delete
-- `GET  /version`              — current version + latest GitHub tag (used by the in-app update banner)
-- Socket.IO at `/socket.io/`   — emits `files:new`, `files:deleted`, `devices:update`, `update:available`
+- `GET  /`                             — React UI
+- `GET  /files`                        — list uploaded files (each entry includes `hasPassword: boolean`)
+- `POST /upload`                       — multipart upload (field: `files`, supports multiple; optional `password` text field protects the batch)
+- `GET  /preview/:filename`            — inline view (used by UI thumbs & modal). Protected files require `?password=…` or `X-File-Password` header
+- `GET  /download/:filename`           — download (attachment). Same password gate as `/preview`
+- `POST /verify-password/:filename`    — validate a password (JSON body `{ password }`) before opening a download/preview URL
+- `DELETE /files/:filename`            — delete (also removes the associated `.meta.json` sidecar)
+- `GET  /version`                      — current version + latest GitHub tag (used by the in-app update banner)
+- Socket.IO at `/socket.io/`           — emits `files:new`, `files:deleted`, `devices:update`, `update:available`
+
+## About passwords
+
+Password protection is **per-file** and optional. When set, the password is hashed with
+`crypto.scrypt` + a random salt and stored in a `<filename>.meta.json` sidecar next to
+the file in `FT_UPLOADS_DIR`. Plaintext is never written to disk.
+
+Hashes are one-way — there is **no password recovery**. If you lose a password, the file
+itself still exists but can only be made accessible again by deleting (or editing) its
+`.meta.json` sidecar on the server.
+
+## About share links
+
+Share URLs look like `http://<host>:3005/?share=<encoded-filename>`. They only carry the
+filename, never the password — protected files shared this way still prompt for the
+password on view/download. Clear the shared state with the ✕ button on the green banner.
 
 ## Report a bug or request a feature
 
